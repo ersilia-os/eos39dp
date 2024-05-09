@@ -30,8 +30,7 @@ def warn(*args, **kwargs):
 warnings.warn = warn
 
 root = os.path.dirname(os.path.abspath(__file__))
-MODELPATH = os.path.join(root, '..', 'checkpoints')
-
+MODELPATH = os.path.join(root, '../..', 'checkpoints/')
 MODEL_DICT = {
     'Hepatic Stability': ['Dataset_01B_hepatic-stability_15min_imbalanced-morgan_RF.pgz',
                           'Dataset_01C_hepatic-stability_30min_imbalanced-morgan_RF.pgz',
@@ -200,6 +199,58 @@ def test_pickled_model_data(files):
         except Exception as e:
             print(f"An error occurred while loading the pickled model data: {e}")
 
+# def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
+#     def default(key, d):
+#         if key in d.keys():
+#             return d[key]
+#         else:
+#             return False
+
+#     models = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pgz"))], key=lambda x: x.split("_")[1])
+#     models_data = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pbz2"))], key=lambda x: x.split("_")[1])
+#     #models = sorted([f for f in glob.glob("../checkpoints/*.pbz2")], key=lambda x: x.split("_")[1])
+#     #models_data = sorted([f for f in glob.glob("../checkpoints/*.pbz2")], key=lambda x: x.split("_")[1])
+#     values = {}
+#     #print("executing......")
+#     #print(models)
+#     print(models_data)
+#     for model_endpoint, model_data_endpoint in zip(models, models_data):
+#         if not default(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], kwargs):
+#             continue
+#         model, model_data = load_model_and_data(model_endpoint, model_data_endpoint)
+#         pred, pred_proba, ad = run_prediction(model, model_data, smiles, calculate_ad=calculate_ad)
+#         svg_str = ""
+    
+#         if make_prop_img:
+#             svg_str = get_prob_map(model, smiles)
+#         print(os.path.basename(model_endpoint))
+
+#         # Check if pred_proba is None before converting it to float and rounding
+#         if pred_proba is not None:
+#             pred_proba_str = str(round(float(pred_proba) * 100, 2)) + "%"
+#         else:
+#             pred_proba_str = "N/A"  # or any default value you prefer
+
+#         values.setdefault(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], []).append([int(pred), pred_proba_str, AD_DICT[ad], svg_str])
+
+#     processed_results = []
+#     for key, val in values.items():
+#         if key in ['Hepatic Stability', 'Renal Clearance', 'Plasma Half-life', 'Oral Bioavailability']:
+#             new_pred = multiclass_ranking([_[0] for _ in val])
+#             if new_pred == 0:
+#                 processed_results.append([key, "Inconsistent result: no prediction", "Very unconfident", "NA", ""])
+#             else:
+#                 # this is because of how the hierarchical model works
+#                 if new_pred in [1, 2]:
+#                     p = 0
+#                 else:
+#                     p = new_pred - 2
+#                 processed_results.append([key, CLASSIFICATION_DICT[key][new_pred], val[p][1], val[p][2], val[p][3]])
+#         else:
+#             processed_results.append([key, CLASSIFICATION_DICT[key][val[0][0]], val[0][1], val[0][2], val[0][3]])
+
+#     return processed_results
+
 def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
     def default(key, d):
         if key in d.keys():
@@ -208,13 +259,18 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
             return False
 
     models = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pgz"))], key=lambda x: x.split("_")[1])
-    models_data = sorted([f for f in glob.glob("./models/*.pbz2")], key=lambda x: x.split("_")[1])
-    print(models)
-
+    models_data = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pbz2"))], key=lambda x: x.split("_")[1])
     values = {}
     
     for model_endpoint, model_data_endpoint in zip(models, models_data):
-        if not default(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], kwargs):
+        model_basename = os.path.basename(model_endpoint)
+        print("Model Endpoint:", model_basename)
+        
+        if model_basename not in MODEL_DICT_INVERT:
+            print("Model basename not found in MODEL_DICT_INVERT:", model_basename)
+            continue
+        
+        if not default(MODEL_DICT_INVERT[model_basename], kwargs):
             continue
         model, model_data = load_model_and_data(model_endpoint, model_data_endpoint)
         pred, pred_proba, ad = run_prediction(model, model_data, smiles, calculate_ad=calculate_ad)
@@ -222,7 +278,15 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
     
         if make_prop_img:
             svg_str = get_prob_map(model, smiles)
+
         print(os.path.basename(model_endpoint))
+
+        # Debug print for ad value
+        print("AD value:", ad)
+
+        if ad is None:
+            print("AD is None. Check run_prediction function for issues.")
+            continue
 
         # Check if pred_proba is None before converting it to float and rounding
         if pred_proba is not None:
@@ -230,28 +294,14 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
         else:
             pred_proba_str = "N/A"  # or any default value you prefer
 
-        values.setdefault(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], []).append([int(pred), pred_proba_str, AD_DICT[ad], svg_str])
-
-    processed_results = []
-    for key, val in values.items():
-        if key in ['Hepatic Stability', 'Renal Clearance', 'Plasma Half-life', 'Oral Bioavailability']:
-            new_pred = multiclass_ranking([_[0] for _ in val])
-            if new_pred == 0:
-                processed_results.append([key, "Inconsistent result: no prediction", "Very unconfident", "NA", ""])
-            else:
-                # this is because of how the hierarchical model works
-                if new_pred in [1, 2]:
-                    p = 0
-                else:
-                    p = new_pred - 2
-                processed_results.append([key, CLASSIFICATION_DICT[key][new_pred], val[p][1], val[p][2], val[p][3]])
+        # Ensure ad is a valid key in AD_DICT before accessing it
+        if ad in AD_DICT:
+            ad_str = AD_DICT[ad]
         else:
-            processed_results.append([key, CLASSIFICATION_DICT[key][val[0][0]], val[0][1], val[0][2], val[0][3]])
+            ad_str = "Unknown"
 
-    return processed_results
+        values.setdefault(MODEL_DICT_INVERT[model_basename], []).append([int(pred), pred_proba_str, ad_str, svg_str])
 
-
-from tqdm import tqdm
 
 """
 def write_csv_file(smiles_list, calculate_ad=False):
@@ -348,6 +398,7 @@ from tqdm import tqdm
 # MODEL_DICT = {...}
 
 def write_csv_file(smiles_list, calculate_ad=False):
+    #print("Executing....write_csv_file")
     headers = list(MODEL_DICT.keys())
 
     if calculate_ad:
@@ -366,7 +417,11 @@ def write_csv_file(smiles_list, calculate_ad=False):
             continue
 
         data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
-
+        print("Data:======", calculate_ad)
+        print("Executing....main and data 1")
+        print("Data:======", data)
+        print("Executing....main and data 2")
+        print("smiles:======", smiles)
         for model_name, pred, pred_proba, ad, _ in data:
             try:
                 # Convert pred_proba to float
