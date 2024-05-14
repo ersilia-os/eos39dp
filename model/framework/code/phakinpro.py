@@ -24,7 +24,6 @@ import io
 import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# god hates me so in my version of python I cannot supress these damn user warning so I do this nuclear option instead
 def warn(*args, **kwargs):
     pass
 warnings.warn = warn
@@ -53,7 +52,6 @@ MODEL_DICT = {
                              'dataset_10_oral_bioavailability_0.8_balanced-morgan_RF.pgz']
 }
 
-# lol I'm just like screw code readability sorry
 MODEL_DICT_INVERT = {v: key for key, val in MODEL_DICT.items() for v in val}
 
 CLASSIFICATION_DICT = {
@@ -151,7 +149,7 @@ def get_prob_map(model, smiles):
     fig, _ = SimilarityMaps.GetSimilarityMapForModel(mol, get_fp, get_proba)
     imgdata = io.StringIO()
     fig.savefig(imgdata, format='svg')
-    imgdata.seek(0)  # rewind the data
+    imgdata.seek(0)
     plt.savefig(imgdata, format="svg", bbox_inches="tight")
 
     return imgdata.getvalue()
@@ -173,15 +171,12 @@ def multiclass_ranking(ordered_preds):
 
 
 def load_model_and_data(model_endpoint, model_data_endpoint):
-  # Load the model
   with gzip.open(model_endpoint, 'rb') as f:
       model = joblib.load(f)
 
-  # Load the model data
   with bz2.BZ2File(model_data_endpoint, 'rb') as f:
       model_data = joblib.load(f)
 
-  # Check for missing field and create a new array if needed
   if 'node' in model_data and 'missing_go_to_left' not in model_data['node'].dtype.names:
       expected_dtype = [('left_child', '<i8'), ('right_child', '<i8'), ('feature', '<i8'),
                         ('threshold', '<f8'), ('impurity', '<f8'), ('n_node_samples', '<i8'),
@@ -207,42 +202,18 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
         else:
             return False
 
-    #models = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pgz"))], key=lambda x: x.split("_")[1])
-    #models_data = sorted([f for f in glob.glob("./models/*.pbz2")], key=lambda x: x.split("_")[1])
     models = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pgz"))], key=lambda x: x.split("_")[1])
     models_data = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pbz2"))], key=lambda x: x.split("_")[1])
-    #print(models)
 
     values = {}
-    """
-    for model_endpoint, model_data_endpoint in zip(models, models_data):
-        if not default(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], kwargs):
-            continue
-        model, model_data = load_model_and_data(model_endpoint, model_data_endpoint)
-        pred, pred_proba, ad = run_prediction(model, model_data, smiles, calculate_ad=calculate_ad)
-        svg_str = ""
-    
-        if make_prop_img:
-            svg_str = get_prob_map(model, smiles)
-        print(os.path.basename(model_endpoint))
-
-        # Check if pred_proba is None before converting it to float and rounding
-        if pred_proba is not None:
-            pred_proba_str = str(round(float(pred_proba) * 100, 2)) + "%"
-        else:
-            pred_proba_str = "N/A"  # or any default value you prefer
-
-        values.setdefault(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], []).append([int(pred), pred_proba_str, AD_DICT[ad], svg_str])
-    """
     
     for model_endpoint, model_data_endpoint in zip(models, models_data):
         model_basename = os.path.basename(model_endpoint)
         model_key = MODEL_DICT_INVERT.get(model_basename)
         if model_key is None:
             print(f"Model endpoint key not found: {model_basename}")
-            continue  # Skip processing if the key isn't found
+            continue 
 
-        # Check if the model is required based on input parameters
         if not default(model_key, kwargs):
             continue
 
@@ -254,15 +225,12 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
             svg_str = get_prob_map(model, smiles)
         print(model_basename)
 
-        # Check if pred_proba is None before converting it to float and rounding
-        pred_proba_str = "N/A"  # Default value if pred_proba is None
+        pred_proba_str = "N/A" 
         if pred_proba is not None:
             pred_proba_str = str(round(float(pred_proba) * 100, 2)) + "%"
 
-        # Safely handle 'ad' value before accessing AD_DICT
-        ad_value = AD_DICT.get(ad, "Unknown AD status")  # Default value if 'ad' is None
+        ad_value = AD_DICT.get(ad, "Unknown AD status") 
 
-        # Append results to values dictionary using the correct model key
         values.setdefault(model_key, []).append([int(pred), pred_proba_str, ad_value, svg_str])
 
 
@@ -273,7 +241,6 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
             if new_pred == 0:
                 processed_results.append([key, "Inconsistent result: no prediction", "Very unconfident", "NA", ""])
             else:
-                # this is because of how the hierarchical model works
                 if new_pred in [1, 2]:
                     p = 0
                 else:
@@ -286,100 +253,11 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
 
 
 from tqdm import tqdm
-
-"""
-def write_csv_file(smiles_list, calculate_ad=False):
-    from rdkit.Chem import MolFromSmiles
-    headers = list(MODEL_DICT.keys())
-
-    if calculate_ad:
-        headers = headers + [_ + "_AD" for _ in headers]
-
-    string_file = StringIO()
-    writer = csv.DictWriter(string_file, fieldnames=['SMILES', *headers])
-    writer.writeheader()
-
-    for smiles in tqdm(smiles_list):
-        molecule = MolFromSmiles(smiles)
-
-        row = {'SMILES': smiles}
-
-        if molecule is None:
-            row['SMILES'] = f"(invalid){smiles}"
-            writer.writerow(row)
-            continue
-
-        data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
-
-        for model_name, pred, pred_proba, ad, _ in data:
-            try:
-                # Convert pred_proba to float
-                pred_proba = float(pred_proba[:-1]) / 100  
-                # Handle non-predictions
-                if pred_proba < 0 or pred_proba > 1:
-                    pred_proba = None
-            except ValueError:
-                pred_proba = None  # if pred_proba is string skip
-            row[model_name] = pred_proba
-            
-            if calculate_ad:
-                row[model_name + "_AD"] = ad
-
-        writer.writerow(row)
-
-    return string_file.getvalue()
-"""
-
-"""
-def write_csv_file(smiles_list, calculate_ad=False):
-    from rdkit.Chem import MolFromSmiles
-    headers = list(MODEL_DICT.keys())
-
-    if calculate_ad:
-        headers = headers + [_ + "_AD" for _ in headers]
-
-    output = []
-    for smiles in tqdm(smiles_list):
-        molecule = MolFromSmiles(smiles)
-
-        row = [''] * (len(headers) + 1)  # Adding one for SMILES column
-
-        if molecule is None:
-            row[0] = f"(invalid){smiles}"
-            output.append(row)
-            continue
-
-        data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
-
-        for model_name, pred, pred_proba, ad, _ in data:
-            try:
-                # Convert pred_proba to float
-                pred_proba = float(pred_proba[:-1]) / 100  
-                # Handle non-predictions
-                if pred_proba < 0 or pred_proba > 1:
-                    pred_proba = None
-            except ValueError:
-                pred_proba = None  # if pred_proba is string skip
-            
-            index = headers.index(model_name)
-            row[index + 1] = pred_proba
-            
-            if calculate_ad:
-                row.append(ad)
-
-        row[0] = smiles
-        output.append(row)
-
-    return [[','.join(row)] for row in output]
-"""
-
 import csv
 from io import StringIO
 from rdkit.Chem import MolFromSmiles
 from tqdm import tqdm
 
-# Assuming MODEL_DICT is defined somewhere in your code
-# MODEL_DICT = {...}
 
 def write_csv_file(smiles_list, calculate_ad=False):
     headers = list(MODEL_DICT.keys())
@@ -387,12 +265,12 @@ def write_csv_file(smiles_list, calculate_ad=False):
     if calculate_ad:
         headers = headers + [_ + "_AD" for _ in headers]
 
-    output = [["SMILES"] + headers]  # Add "SMILES" as the first column
+    output = [["SMILES"] + headers] 
 
     for smiles in tqdm(smiles_list):
         molecule = MolFromSmiles(smiles)
 
-        row = [''] * (len(headers) + 1)  # Adding one for SMILES column
+        row = [''] * (len(headers) + 1) 
 
         if molecule is None:
             row[0] = f"(invalid){smiles}"
@@ -403,13 +281,11 @@ def write_csv_file(smiles_list, calculate_ad=False):
 
         for model_name, pred, pred_proba, ad, _ in data:
             try:
-                # Convert pred_proba to float
                 pred_proba = float(pred_proba[:-1]) / 100  
-                # Handle non-predictions
                 if pred_proba < 0 or pred_proba > 1:
                     pred_proba = None
             except ValueError:
-                pred_proba = None  # if pred_proba is string skip
+                pred_proba = None
             
             index = headers.index(model_name)
             row[index + 1] = pred_proba
@@ -423,29 +299,18 @@ def write_csv_file(smiles_list, calculate_ad=False):
     return output
 
 if __name__ == "__main__":
-    # Import necessary libraries
-    #import argparse
-    #import csv
     import logging
-    #import pickle
-    #from io import StringIO  # Add this import
-    #from rdkit.Chem import MolFromSmiles
-    #from tqdm import tqdm
-    #from phakinpro import write_csv_file  # Assuming the write_csv_file function is defined in phakinpro.py
-    
     import argparse
     import csv
     from io import StringIO
     from rdkit.Chem import MolFromSmiles
     from tqdm import tqdm
 
-    # Configure logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     logger.info("Script is running...")
 
-    # Parse command-line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--infile", type=str, required=True, help="Location of the CSV file containing SMILES")
     parser.add_argument("--outfile", type=str, default="phakin_output.csv", help="Output CSV file path")
@@ -453,21 +318,14 @@ if __name__ == "__main__":
     parser.add_argument("--ad", action="store_true", help="Calculate the AD")
     args = parser.parse_args()
 
-    # Read SMILES from input CSV
     smiles_list = []
     with open(args.infile, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             smiles_list.append(row[args.smiles_col])
 
-    # Call the function with parsed arguments
     try:
         output = write_csv_file(smiles_list, calculate_ad=args.ad)
-        # Print the output before writing to CSV
-        print("Output before writing to CSV:")
-        #print(output)
-
-        # Write output to the specified file
         with open(args.outfile, 'w') as outfile:
             outfile.write(output)
         logger.info("CSV file generation complete.")
