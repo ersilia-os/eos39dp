@@ -4,7 +4,7 @@
     "Status": "In progress",
     "Title": "Pharmacokinetics Profiler (PhaKinPro)",
     "Description": "Pharmacokinetics Profiler (PhaKinPro) is a recently developed web-based tool that helps predict the pharmacokinetic (PK) properties of drug candidates.  In essence, it assists scientists in determining how a drug will behave within the body.\nPharmacokinetics refers to the processes by which a drug is absorbed, distributed, metabolized, and excreted (ADME). Understanding these processes is critical in drug development, as they can affect a drug's efficacy and safety. For example, a drug that is rapidly metabolized may not be effective in the body, while a drug that is slowly excreted may accumulate to toxic levels.",
-    "Mode": "",
+    "Mode": "Online",
     "Task": [],
     "Input": [],
     "Input Shape": "",
