@@ -45,6 +45,7 @@ jobs:
           conda install git-lfs -c conda-forge
           git-lfs install
           conda install gh -c conda-forge
+          pip install -r requirements.txt
 
       - name: Install ersilia
         run: |
