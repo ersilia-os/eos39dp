@@ -13,7 +13,7 @@
     ],
     "Input Shape": "Single",
     "Output": [
-        "PK Properties"
+        "Compound"
     ],
     "Output Type": [
         "Float"
