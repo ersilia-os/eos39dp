@@ -3,12 +3,18 @@ FROM bentoml/model-server:0.11.0-py310
 
 MAINTAINER ersilia
 
+# Switch to root user to install system dependencies
+USER root
+
 # Install system dependencies for building Python packages
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
+
+# Switch back to non-root user (default in Bentoml model server images)
+USER bentoml
 
 # Install compatible versions of setuptools and wheel
 RUN pip install setuptools==59.5.0 wheel
