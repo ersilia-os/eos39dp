@@ -13,6 +13,7 @@ RUN pip install cloudpickle==2.0.0
 RUN pip install joblib==1.1.0
 RUN pip install tqdm==4.62.2
 RUN pip install matplotlib==3.4.3
+RUN pip install cython==0.29.23
 
 # Set the working directory
 WORKDIR /repo
