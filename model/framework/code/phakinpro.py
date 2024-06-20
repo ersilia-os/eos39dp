@@ -9,12 +9,12 @@ import bz2
 import os
 import _pickle as cPickle
 import joblib
-import sklearn
+#import sklearn
 import logging
 import pickle
-import cloudpickle
-import pandas as pd
-from io import StringIO
+#import cloudpickle
+#import pandas as pd
+#from io import StringIO
 import csv
 from tqdm import tqdm
 import logging

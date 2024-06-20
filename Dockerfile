@@ -1,19 +1,16 @@
-# Use the Bentoml model server with Python 3.10
 FROM bentoml/model-server:0.11.0-py310
 
 MAINTAINER ersilia
 
 # Install dependencies
-RUN pip install rdkit==2022.3.3
-RUN pip install scikit-learn==0.24.2
-RUN pip install scipy==1.7.1
-RUN pip install numpy==1.21.2
-RUN pip install pandas==1.3.3
-RUN pip install cloudpickle==2.0.0
-RUN pip install joblib==1.1.0
-RUN pip install tqdm==4.62.2
-RUN pip install matplotlib==3.4.3
-RUN pip install cython==0.29.23
+RUN pip install rdkit==2022.3.3 \
+    scipy==1.7.1 \
+    numpy==1.26.4 \
+    cloudpickle==2.0.0 \
+    joblib==1.1.0 \
+    tqdm==4.66.4 \
+    matplotlib==3.4.3 \
+    cython==0.29.23
 
 # Set the working directory
 WORKDIR /repo
