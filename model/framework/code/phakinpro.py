@@ -1,27 +1,25 @@
 from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem
-from rdkit.Chem.Draw import SimilarityMaps
+from rdkit.Chem import AllChem, rdMolDescriptors
+try:
+    from rdkit.Chem import SimilarityMaps
+    similarity_maps_available = True
+except ImportError:
+    similarity_maps_available = False
 from scipy.spatial.distance import cdist
 import numpy as np
 import glob
 import gzip
 import bz2
 import os
-import _pickle as cPickle
 import joblib
-#import sklearn
 import logging
 import pickle
-#import cloudpickle
-#import pandas as pd
-#from io import StringIO
 import csv
 from tqdm import tqdm
-import logging
 import warnings
-
 import io
 import matplotlib.pyplot as plt
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def warn(*args, **kwargs):
@@ -116,7 +114,7 @@ AD_DICT = {
 
 def run_prediction(model, model_data, smiles, calculate_ad=True):
     fp = np.zeros((2048, 1))
-    _fp = AllChem.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(smiles), radius=3, nBits=2048)
+    _fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(smiles), radius=3, nBits=2048)
     DataStructs.ConvertToNumpyArray(_fp, fp)
 
     if hasattr(model, 'predict_proba'):
@@ -129,6 +127,7 @@ def run_prediction(model, model_data, smiles, calculate_ad=True):
     if pred == 0 and pred_proba is not None:
         pred_proba = 1 - pred_proba
 
+   
     if calculate_ad:
         ad = model_data["D_cutoff"] > np.min(cdist(model_data['Descriptors'].to_numpy(), fp.reshape(1, -1)))
         return pred, pred_proba, ad
@@ -136,6 +135,8 @@ def run_prediction(model, model_data, smiles, calculate_ad=True):
     
 
 def get_prob_map(model, smiles):
+    if not similarity_maps_available:
+        raise ImportError("SimilarityMaps is not available in the installed RDKit version")
     def get_fp(mol, idx):
         fps = np.zeros((2048, 1))
         _fps = SimilarityMaps.GetMorganFingerprint(mol, idx, radius=3, nBits=2048)
@@ -233,6 +234,7 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
 
         values.setdefault(model_key, []).append([int(pred), pred_proba_str, ad_value, svg_str])
 
+    print("Processed results:", values)  # Added debug print
 
     processed_results = []
     for key, val in values.items():
@@ -249,28 +251,22 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
         else:
             processed_results.append([key, CLASSIFICATION_DICT[key][val[0][0]], val[0][1], val[0][2], val[0][3]])
 
+    print("Final processed results:", processed_results)  # Added debug print
+
     return processed_results
-
-
-from tqdm import tqdm
-import csv
-from io import StringIO
-from rdkit.Chem import MolFromSmiles
-from tqdm import tqdm
-
 
 def write_csv_file(smiles_list, calculate_ad=False):
     headers = list(MODEL_DICT.keys())
 
     if calculate_ad:
-        headers = headers + [_ + "_AD" for _ in headers]
+        headers += [f"{header}_AD" for header in headers]
 
-    output = [["SMILES"] + headers] 
+    output = [["SMILES"] + headers]
 
     for smiles in tqdm(smiles_list):
-        molecule = MolFromSmiles(smiles)
+        molecule = Chem.MolFromSmiles(smiles)
 
-        row = [''] * (len(headers) + 1) 
+        row = [''] * (len(headers) + 1)
 
         if molecule is None:
             row[0] = f"(invalid){smiles}"
@@ -281,12 +277,12 @@ def write_csv_file(smiles_list, calculate_ad=False):
 
         for model_name, pred, pred_proba, ad, _ in data:
             try:
-                pred_proba = float(pred_proba[:-1]) / 100  
+                pred_proba = float(pred_proba[:-1]) / 100  # Convert percentage to decimal
                 if pred_proba < 0 or pred_proba > 1:
                     pred_proba = None
             except ValueError:
                 pred_proba = None
-            
+
             index = headers.index(model_name)
             row[index + 1] = pred_proba
             
@@ -295,6 +291,10 @@ def write_csv_file(smiles_list, calculate_ad=False):
 
         row[0] = smiles
         output.append(row)
+    
+    # Debug print to see the structure of output
+    for line in output:
+        print(line)
 
     return output
 
@@ -326,8 +326,9 @@ if __name__ == "__main__":
 
     try:
         output = write_csv_file(smiles_list, calculate_ad=args.ad)
-        with open(args.outfile, 'w') as outfile:
-            outfile.write(output)
+        with open(args.outfile, "w", newline='') as outfile:
+            writer = csv.writer(outfile)
+            writer.writerows(output)
         logger.info("CSV file generation complete.")
     except Exception as e:
         logger.exception("An error occurred during CSV file generation.")
