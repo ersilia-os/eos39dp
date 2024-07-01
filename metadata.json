@@ -19,7 +19,7 @@
         "Float"
     ],
     "Output Shape": "List",
-    "Interpretation": "This tool helps in predicting the ADME properties of drug candidates.",
+    "Interpretation": "A list of several ADME predictions",
     "Tag": [
         "Microsomal stability",
         "ADME",
@@ -27,5 +27,11 @@
     ],
     "Publication": "https://pubs.acs.org/doi/10.1021/acs.jmedchem.3c02446",
     "Source Code": "https://github.com/molecularmodelinglab/PhaKinPro",
-    "License": "MIT"
+    "License": "MIT",
+    "S3": "https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip",
+    "DockerHub": "https://hub.docker.com/r/ersiliaos/eos39dp",
+    "Docker Architecture": [
+        "AMD64",
+        "ARM64"
+    ]
 }

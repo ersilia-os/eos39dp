@@ -16,7 +16,7 @@ Pharmacokinetics refers to the processes by which a drug is absorbed, distribute
 * Output: `Compound`
 * Output Type: `Float`
 * Output Shape: `List`
-* Interpretation: This tool helps in predicting the ADME properties of drug candidates.
+* Interpretation: A list of several ADME predictions
 
 ## References
 
@@ -26,6 +26,8 @@ Pharmacokinetics refers to the processes by which a drug is absorbed, distribute
 
 ## Ersilia model URLs
 * [GitHub](https://github.com/ersilia-os/eos39dp)
+* [AWS S3](https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip)
+* [DockerHub](https://hub.docker.com/r/ersiliaos/eos39dp) (AMD64, ARM64)
 
 ## Citation
 
