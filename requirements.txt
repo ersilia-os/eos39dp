@@ -1,0 +1,10 @@
+scipy
+rdkit
+numpy
+pandas
+scikit-learn
+cloudpickle
+joblib
+tqdm
+matplotlib
+
