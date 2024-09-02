@@ -1,20 +1,54 @@
-# Use the Bentoml model server with Python 3.10
-FROM bentoml/model-server:0.11.0-py38
+FROM ersiliaos/base-v2:latest AS build
+ARG MODEL=eos39dp
+ENV MODEL=$MODEL
+RUN ersilia -v fetch $MODEL --from_github
+# Install conda pack so we can create a standalone environment from
+# the model's conda environment
+RUN conda install -c conda-forge -y conda-pack
+RUN conda-pack -n $MODEL -o /tmp/env.tar && \
+    mkdir /$MODEL && cd /$MODEL && tar xf /tmp/env.tar && \
+    rm /tmp/env.tar
+RUN /$MODEL/bin/conda-unpack
 
-MAINTAINER ersilia
+# Now we can create a new image that only contains
+# the ersilia environment, the model environment, 
+# and the model itself (as a bentoml bundle)
 
-# Install dependencies
-RUN pip install rdkit==2023.9.6
-RUN pip install scikit-learn==0.24.2
-RUN pip install scipy==1.10
-RUN pip install cloudpickle==3.0.0
-RUN pip install numpy==1.24.4
-RUN pip install pandas==1.3.3
-RUN pip install matplotlib==3.7.5
-RUN pip install tqdm==4.66.4
+FROM python:3.7-slim-buster
+WORKDIR /root
+ARG MODEL=eos39dp
+ENV MODEL=$MODEL
 
-# Set the working directory
-WORKDIR /repo
+# The following lines ensure that ersilia environment is directly in the path
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PATH="/venv/bin:$PATH"
 
-# Copy the contents of the current directory to /repo in the Docker image
-COPY . /repo
+# We install nginx here directly instead of the base image
+RUN apt-get update && apt-get install nginx -y
+
+# Copy the model env and ersilia env from the build image
+COPY --from=build /$MODEL /$MODEL
+COPY --from=build /venv /venv
+
+# Retain the bundled model bento from the build stage
+COPY --from=build /root/eos /root/eos
+# Copy bentoml artifacts so it doesn't complain about model bento not being found
+COPY --from=build /root/bentoml /root/bentoml
+
+COPY --from=build /root/docker-entrypoint.sh docker-entrypoint.sh
+COPY --from=build /root/nginx.conf /etc/nginx/sites-available/default
+
+# Patch the python path so we call the correct python binary
+RUN /bin/bash <<EOF
+set -eux
+cd /root/bentoml/repository/$MODEL/*/$MODEL/artifacts/
+if [ -f framework/run.sh ]; then
+  sed -i -E 's/(.usr.bin.conda.envs(.*bin.*python)(.*))/\2 \3/' framework/run.sh
+fi
+EOF
+
+RUN chmod + docker-entrypoint.sh
+EXPOSE 80
+ENTRYPOINT [ "sh", "docker-entrypoint.sh"]

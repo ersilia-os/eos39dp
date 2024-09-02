@@ -1,28 +1,37 @@
+# imports
+import os
 import csv
 import sys
-from rdkit import Chem
-from rdkit.Chem.Descriptors import MolWt
-from phakinpro import write_csv_file
+from io import StringIO
 
+# parse arguments
 input_file = sys.argv[1]
 output_file = sys.argv[2]
 
-def my_model(smiles_list):
-    return [MolWt(Chem.MolFromSmiles(smi)) for smi in smiles_list]
+# current file directory
+root = os.path.dirname(os.path.abspath(__file__))
 
+sys.path.append(root)
+from phakinpro import write_csv_file
+
+
+# read SMILES from .csv file, assuming one column with header
 with open(input_file, "r") as f:
     reader = csv.reader(f)
-    next(reader)
+    next(reader)  # skip header
     smiles_list = [r[0] for r in reader]
 
-outputs = write_csv_file(smiles_list, calculate_ad=False)
+# run model
+outputs = write_csv_file(smiles_list)
 
-# Debug print the output before writing to file
-print("Generated Outputs:")
-print(outputs)
+csv_file_like = StringIO(outputs)
 
-# Writing the structured output to CSV
+reader = csv.reader(csv_file_like)
+
+# Write the content to a new CSV file
 with open(output_file, "w", newline='') as f:
     writer = csv.writer(f)
-    for row in outputs:
-        writer.writerow(row)
+    header = next(reader)
+    writer.writerow(header[1:])
+    for row in reader:
+        writer.writerow(row[1:])

@@ -1,33 +1,25 @@
 from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem, rdMolDescriptors
-try:
-    from rdkit.Chem import SimilarityMaps
-    similarity_maps_available = True
-except ImportError:
-    similarity_maps_available = False
+from rdkit.Chem import AllChem
+from rdkit.Chem.Draw import SimilarityMaps
 from scipy.spatial.distance import cdist
 import numpy as np
+
 import glob
 import gzip
 import bz2
 import os
-import joblib
-import logging
-import pickle
 import csv
 from tqdm import tqdm
-import warnings
+import _pickle as cPickle
+
 import io
-import matplotlib.pyplot as plt
+from io import StringIO
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
+# god hates me so in my version of python I cannot supress these damn user warning so I do this nuclear option instead
+import warnings
 def warn(*args, **kwargs):
     pass
 warnings.warn = warn
-
-root = os.path.dirname(os.path.abspath(__file__))
-MODELPATH = os.path.join(root, '../..', 'checkpoints/')
 
 MODEL_DICT = {
     'Hepatic Stability': ['Dataset_01B_hepatic-stability_15min_imbalanced-morgan_RF.pgz',
@@ -50,6 +42,7 @@ MODEL_DICT = {
                              'dataset_10_oral_bioavailability_0.8_balanced-morgan_RF.pgz']
 }
 
+# lol I'm just like screw code readability sorry
 MODEL_DICT_INVERT = {v: key for key, val in MODEL_DICT.items() for v in val}
 
 CLASSIFICATION_DICT = {
@@ -112,31 +105,27 @@ AD_DICT = {
     False: "Outside"
 }
 
+root = os.path.dirname(os.path.abspath(__file__))
+MODELPATH = os.path.join(root, '../..', 'checkpoints/')
+
 def run_prediction(model, model_data, smiles, calculate_ad=True):
     fp = np.zeros((2048, 1))
-    _fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(smiles), radius=3, nBits=2048)
+    _fp = AllChem.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(smiles), radius=3, nBits=2048)
     DataStructs.ConvertToNumpyArray(_fp, fp)
 
-    if hasattr(model, 'predict_proba'):
-        pred_proba = model.predict_proba(fp.reshape(1, -1))[:, 1]
-    else:
-        pred_proba = None
+    pred_proba = model.predict_proba(fp.reshape(1, -1))[:, 1]
+    pred = 1 if pred_proba > 0.5 else 0
 
-    pred = 1 if pred_proba is not None and pred_proba > 0.5 else 0
+    if pred == 0:
+        pred_proba = 1-pred_proba
 
-    if pred == 0 and pred_proba is not None:
-        pred_proba = 1 - pred_proba
-
-   
     if calculate_ad:
         ad = model_data["D_cutoff"] > np.min(cdist(model_data['Descriptors'].to_numpy(), fp.reshape(1, -1)))
         return pred, pred_proba, ad
     return pred, pred_proba, None
-    
+
 
 def get_prob_map(model, smiles):
-    if not similarity_maps_available:
-        raise ImportError("SimilarityMaps is not available in the installed RDKit version")
     def get_fp(mol, idx):
         fps = np.zeros((2048, 1))
         _fps = SimilarityMaps.GetMorganFingerprint(mol, idx, radius=3, nBits=2048)
@@ -150,7 +139,7 @@ def get_prob_map(model, smiles):
     fig, _ = SimilarityMaps.GetSimilarityMapForModel(mol, get_fp, get_proba)
     imgdata = io.StringIO()
     fig.savefig(imgdata, format='svg')
-    imgdata.seek(0)
+    imgdata.seek(0)  # rewind the data
     plt.savefig(imgdata, format="svg", bbox_inches="tight")
 
     return imgdata.getvalue()
@@ -171,32 +160,11 @@ def multiclass_ranking(ordered_preds):
     return idx if idx != 0 else len(ordered_preds)+1
 
 
-def load_model_and_data(model_endpoint, model_data_endpoint):
-  with gzip.open(model_endpoint, 'rb') as f:
-      model = joblib.load(f)
-
-  with bz2.BZ2File(model_data_endpoint, 'rb') as f:
-      model_data = joblib.load(f)
-
-  if 'node' in model_data and 'missing_go_to_left' not in model_data['node'].dtype.names:
-      expected_dtype = [('left_child', '<i8'), ('right_child', '<i8'), ('feature', '<i8'),
-                        ('threshold', '<f8'), ('impurity', '<f8'), ('n_node_samples', '<i8'),
-                        ('weighted_n_node_samples', '<f8'), ('missing_go_to_left', 'u1')]
-      model_data['node'] = np.array(model_data['node'], dtype=expected_dtype)
-
-  return model, model_data
-    
-def test_pickled_model_data(files):
-    for file_path in files:
-        print(f"Testing file: {file_path}")
-        try:
-            with bz2.open(file_path, 'rb') as f:
-                data = pickle.load(f)
-            print("Successfully loaded the pickled model data.")
-        except Exception as e:
-            print(f"An error occurred while loading the pickled model data: {e}")
-
 def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
+
+    # print(smiles)
+    # print(os.getcwd())
+
     def default(key, d):
         if key in d.keys():
             return d[key]
@@ -207,34 +175,20 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
     models_data = sorted([f for f in glob.glob(os.path.join(MODELPATH, "*.pbz2"))], key=lambda x: x.split("_")[1])
 
     values = {}
-    
-    for model_endpoint, model_data_endpoint in zip(models, models_data):
-        model_basename = os.path.basename(model_endpoint)
-        model_key = MODEL_DICT_INVERT.get(model_basename)
-        if model_key is None:
-            print(f"Model endpoint key not found: {model_basename}")
-            continue 
-
-        if not default(model_key, kwargs):
+    for model_endpoint, model_data in zip(models, models_data):
+        if not default(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], kwargs):
             continue
+        with gzip.open(model_endpoint, 'rb') as f:
+            model = cPickle.load(f)
 
-        model, model_data = load_model_and_data(model_endpoint, model_data_endpoint)
+        with bz2.BZ2File(model_data, 'rb') as f:
+            model_data = cPickle.load(f)
+
         pred, pred_proba, ad = run_prediction(model, model_data, smiles, calculate_ad=calculate_ad)
         svg_str = ""
-        
         if make_prop_img:
             svg_str = get_prob_map(model, smiles)
-        print(model_basename)
-
-        pred_proba_str = "N/A" 
-        if pred_proba is not None:
-            pred_proba_str = str(round(float(pred_proba) * 100, 2)) + "%"
-
-        ad_value = AD_DICT.get(ad, "Unknown AD status") 
-
-        values.setdefault(model_key, []).append([int(pred), pred_proba_str, ad_value, svg_str])
-
-    print("Processed results:", values)  # Added debug print
+        values.setdefault(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], []).append([int(pred), str(round(float(pred_proba) * 100, 2)) + "%", AD_DICT[ad], svg_str])
 
     processed_results = []
     for key, val in values.items():
@@ -243,6 +197,7 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
             if new_pred == 0:
                 processed_results.append([key, "Inconsistent result: no prediction", "Very unconfident", "NA", ""])
             else:
+                # this is because of how the hierarchical model works
                 if new_pred in [1, 2]:
                     p = 0
                 else:
@@ -251,85 +206,62 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
         else:
             processed_results.append([key, CLASSIFICATION_DICT[key][val[0][0]], val[0][1], val[0][2], val[0][3]])
 
-    print("Final processed results:", processed_results)  # Added debug print
-
     return processed_results
 
-def write_csv_file(smiles_list, calculate_ad=False):
-    headers = list(MODEL_DICT.keys())
 
-    if calculate_ad:
-        headers += [f"{header}_AD" for header in headers]
+def write_csv_file(smiles_list, calculate_ad=True):
+    headers = []
+    for _key in MODEL_DICT.keys():
+        headers.append(_key)
+        headers.append(_key+"_proba")
+        if calculate_ad:
+            headers.append(_key+"_AD")
 
-    output = [["SMILES"] + headers]
+    string_file = StringIO()
+    writer = csv.DictWriter(string_file, fieldnames=['SMILES', *headers])
+    writer.writeheader()
 
     for smiles in tqdm(smiles_list):
         molecule = Chem.MolFromSmiles(smiles)
 
-        row = [''] * (len(headers) + 1)
+        row = {'SMILES': smiles}
 
         if molecule is None:
-            row[0] = f"(invalid){smiles}"
-            output.append(row)
+            row['SMILES'] = f"(invalid){smiles}"
+            writer.writerow(row)
             continue
 
         data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
 
         for model_name, pred, pred_proba, ad, _ in data:
+            print(pred, pred_proba, ad)
             try:
-                pred_proba = float(pred_proba[:-1]) / 100  # Convert percentage to decimal
-                if pred_proba < 0 or pred_proba > 1:
-                    pred_proba = None
+                pred_proba = float(pred_proba[:-1]) / 100  # covert back to 0-1 float
+                row[model_name] = pred
+                row[model_name + "_proba"] = pred_proba if pred == 1 else 1 - pred_proba  # this is to make sure its proba for class 1
             except ValueError:
-                pred_proba = None
-
-            index = headers.index(model_name)
-            row[index + 1] = pred_proba
-            
+                row[model_name] = "No prediction"  # if pred_proba is string skip
             if calculate_ad:
-                row.append(ad)
+                row[model_name + "_AD"] = ad
 
-        row[0] = smiles
-        output.append(row)
-    
-    # Debug print to see the structure of output
-    for line in output:
-        print(line)
+        writer.writerow(row)
 
-    return output
+    return string_file.getvalue()
+
 
 if __name__ == "__main__":
-    import logging
     import argparse
     import csv
     from io import StringIO
     from rdkit.Chem import MolFromSmiles
     from tqdm import tqdm
 
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-
-    logger.info("Script is running...")
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--infile", type=str, required=True, help="Location of the CSV file containing SMILES")
-    parser.add_argument("--outfile", type=str, default="phakin_output.csv", help="Output CSV file path")
-    parser.add_argument("--smiles_col", type=str, default="SMILES", help="Column name containing SMILES of interest")
-    parser.add_argument("--ad", action="store_true", help="Calculate the AD")
-    args = parser.parse_args()
-
-    smiles_list = []
-    with open(args.infile, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            smiles_list.append(row[args.smiles_col])
-
-    try:
-        output = write_csv_file(smiles_list, calculate_ad=args.ad)
-        with open(args.outfile, "w", newline='') as outfile:
-            writer = csv.writer(outfile)
-            writer.writerows(output)
-        logger.info("CSV file generation complete.")
-    except Exception as e:
-        logger.exception("An error occurred during CSV file generation.")
-        raise e
+    parser.add_argument("--infile", type=str, required=True,
+                        help="location to csv of SMILES")
+    parser.add_argument("--outfile", type=str, default=os.path.join(os.getcwd(), "phakin_output.csv"),
+                        help="location and file name for output")
+    parser.add_argument("--smiles_col", type=str, default="SMILES",
+                        help="column name containing SMILES of interest"),
+    parser.add_argument("--ad", action="store_true",
+                        help="calculate the AD")
