@@ -42,6 +42,8 @@ MODEL_DICT = {
                              'dataset_10_oral_bioavailability_0.8_balanced-morgan_RF.pgz']
 }
 
+HEADER_RENAME_MAP = {i: i.lower().replace(" ", "_").replace("-", "_") for i in sorted(MODEL_DICT)}
+
 # lol I'm just like screw code readability sorry
 MODEL_DICT_INVERT = {v: key for key, val in MODEL_DICT.items() for v in val}
 
@@ -185,15 +187,20 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
             model_data = cPickle.load(f)
 
         pred, pred_proba, ad = run_prediction(model, model_data, smiles, calculate_ad=calculate_ad)
+        print(model_endpoint, pred, pred_proba, ad)
+
         svg_str = ""
         if make_prop_img:
             svg_str = get_prob_map(model, smiles)
         values.setdefault(MODEL_DICT_INVERT[os.path.basename(model_endpoint)], []).append([int(pred), str(round(float(pred_proba) * 100, 2)) + "%", AD_DICT[ad], svg_str])
 
+    print(values)
+
     processed_results = []
     for key, val in values.items():
         if key in ['Hepatic Stability', 'Renal Clearance', 'Plasma Half-life', 'Oral Bioavailability']:
             new_pred = multiclass_ranking([_[0] for _ in val])
+            print(new_pred, key, val)
             if new_pred == 0:
                 processed_results.append([key, "Inconsistent result: no prediction", "Very unconfident", "NA", ""])
             else:
@@ -212,6 +219,7 @@ def main(smiles, calculate_ad=True, make_prop_img=False, **kwargs):
 def write_csv_file(smiles_list, calculate_ad=True):
     headers = []
     for _key in MODEL_DICT.keys():
+        _key = HEADER_RENAME_MAP[_key]
         headers.append(_key)
         headers.append(_key+"_proba")
         if calculate_ad:
@@ -232,9 +240,11 @@ def write_csv_file(smiles_list, calculate_ad=True):
             continue
 
         data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
+        print(data)
 
         for model_name, pred, pred_proba, ad, _ in data:
             print(pred, pred_proba, ad)
+            model_name = HEADER_RENAME_MAP[model_name]
             try:
                 pred_proba = float(pred_proba[:-1]) / 100  # covert back to 0-1 float
                 row[model_name] = pred
