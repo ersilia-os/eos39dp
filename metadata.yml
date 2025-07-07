@@ -2,29 +2,35 @@ Identifier: eos39dp
 Slug: phakinpro
 Status: In progress
 Title: Pharmacokinetics Profiler (PhaKinPro)
-Description: Pharmacokinetics Profiler (PhaKinPro) predicts the pharmacokinetic (PK) properties of drug candidates. It has been built using a manually curated database of 10.000 compounds with information for 12 PK endpoints. Each model provides a multi-classifier output for a single endpoint, along with a confidence estimate of the prediction and whether the query molecule is within the applicability domain of the model.
+Description: Pharmacokinetics Profiler (PhaKinPro) predicts the pharmacokinetic 
+  (PK) properties of drug candidates. It has been built using a manually curated
+  database of 10.000 compounds with information for 12 PK endpoints. Each model 
+  provides a multi-classifier output for a single endpoint, along with a 
+  confidence estimate of the prediction and whether the query molecule is within
+  the applicability domain of the model.
 Deployment:
-- Local
+  - Local
 Source: Local
 Source Type: External
 Task: Annotation
 Subtask: Property calculation or prediction
 Input:
-- Compound
+  - Compound
 Input Dimension: 1
 Output:
-- Probability
+  - Probability
 Output Dimension: 18
 Output Consistency: Fixed
-Interpretation: 'A list of several ADME predictions'
+Interpretation: A list of several ADME predictions
 Tag:
-- ADME
+  - ADME
 Biomedical Area:
-- Any
+  - Any
 Target Organism:
-- Not Applicable
+  - Not Applicable
 Publication Type: Peer reviewed
 Publication Year: 2024
 Publication: https://pubs.acs.org/doi/10.1021/acs.jmedchem.3c02446
 Source Code: https://github.com/molecularmodelinglab/PhaKinPro
 License: MIT
+Incorporation Date: '2024-05-03'
