@@ -50,7 +50,12 @@ _10 of 18 columns are shown_
 ### Resource Consumption
 - **Model Size (Mb):** `50`
 - **Environment Size (Mb):** `2394`
+- **Image Size (Mb):** `2332.36`
 
+**Computational Performance (seconds):**
+- 10 inputs: `28.5`
+- 100 inputs: `18.39`
+- 10000 inputs: `143.94`
 
 ### References
 - **Source Code**: [https://github.com/molecularmodelinglab/PhaKinPro](https://github.com/molecularmodelinglab/PhaKinPro)
