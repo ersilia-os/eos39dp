@@ -1,6 +1,6 @@
 Identifier: eos39dp
 Slug: phakinpro
-Status: In progress
+Status: Ready
 Title: Pharmacokinetics Profiler (PhaKinPro)
 Description: Pharmacokinetics Profiler (PhaKinPro) predicts the pharmacokinetic 
   (PK) properties of drug candidates. It has been built using a manually curated
@@ -35,5 +35,15 @@ Source Code: https://github.com/molecularmodelinglab/PhaKinPro
 License: MIT
 Incorporation Date: '2024-05-03'
 S3: https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip
+DockerHub: https://hub.docker.com/r/ersiliaos/eos39dp
+Docker Architecture:
+  - AMD64
+  - ARM64
 Model Size: 50.0
 Environment Size: 2394.0
+Image Size: 2332.36
+Computational Performance 1: 28.5
+Computational Performance 2: 18.18
+Computational Performance 3: 18.39
+Computational Performance 4: 40.87
+Computational Performance 5: 143.94
