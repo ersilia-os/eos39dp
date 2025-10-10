@@ -2,8 +2,7 @@
 
 Pharmacokinetics Profiler (PhaKinPro) predicts the pharmacokinetic (PK) properties of drug candidates. It has been built using a manually curated database of 10.000 compounds with information for 12 PK endpoints. Each model provides a multi-classifier output for a single endpoint, along with a confidence estimate of the prediction and whether the query molecule is within the applicability domain of the model.
 
-This model was incorporated on 2024-05-03.
-
+This model was incorporated on 2024-05-03.Last packaged on 2025-10-10.
 
 ## Information
 ### Identifiers
@@ -51,12 +50,12 @@ _10 of 18 columns are shown_
 ### Resource Consumption
 - **Model Size (Mb):** `50`
 - **Environment Size (Mb):** `2397`
-- **Image Size (Mb):** `2332.36`
+- **Image Size (Mb):** `2413.88`
 
 **Computational Performance (seconds):**
-- 10 inputs: `28.5`
-- 100 inputs: `18.39`
-- 10000 inputs: `143.94`
+- 10 inputs: `28.98`
+- 100 inputs: `18.91`
+- 10000 inputs: `138.31`
 
 ### References
 - **Source Code**: [https://github.com/molecularmodelinglab/PhaKinPro](https://github.com/molecularmodelinglab/PhaKinPro)
