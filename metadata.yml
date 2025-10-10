@@ -34,6 +34,8 @@ Publication: https://pubs.acs.org/doi/10.1021/acs.jmedchem.3c02446
 Source Code: https://github.com/molecularmodelinglab/PhaKinPro
 License: MIT
 Incorporation Date: '2024-05-03'
+Last Packaging Date: '2025-10-10'
+Release: v1.0.0
 S3: https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip
 DockerHub: https://hub.docker.com/r/ersiliaos/eos39dp
 Docker Architecture:
@@ -41,9 +43,9 @@ Docker Architecture:
   - ARM64
 Model Size: 50.0
 Environment Size: 2397.0
-Image Size: 2332.36
-Computational Performance 1: 28.5
-Computational Performance 2: 18.18
-Computational Performance 3: 18.39
-Computational Performance 4: 40.87
-Computational Performance 5: 143.94
+Image Size: 2413.88
+Computational Performance 1: 28.98
+Computational Performance 2: 18.73
+Computational Performance 3: 18.91
+Computational Performance 4: 40.48
+Computational Performance 5: 138.31
