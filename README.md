@@ -4,6 +4,7 @@ Pharmacokinetics Profiler (PhaKinPro) predicts the pharmacokinetic (PK) properti
 
 This model was incorporated on 2024-05-03.
 
+
 ## Information
 ### Identifiers
 - **Ersilia Identifier:** `eos39dp`
@@ -13,7 +14,7 @@ This model was incorporated on 2024-05-03.
 - **Task:** `Annotation`
 - **Subtask:** `Property calculation or prediction`
 - **Biomedical Area:** `Any`
-- **Target Organism:** `Not Applicable`
+- **Target Organism:** `Any`
 - **Tags:** `ADME`
 
 ### Input
