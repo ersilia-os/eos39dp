@@ -59,7 +59,7 @@ _10 of 18 columns are shown_
 
 ### References
 - **Source Code**: [https://github.com/molecularmodelinglab/PhaKinPro](https://github.com/molecularmodelinglab/PhaKinPro)
-- **Publication**: [https://pubs.acs.org/doi/10.1021/acs.jmedchem.3c02446](https://pubs.acs.org/doi/10.1021/acs.jmedchem.3c02446)
+- **Publication**: [https://doi.org/10.1021/acs.jmedchem.3c02446](https://doi.org/10.1021/acs.jmedchem.3c02446)
 - **Publication Type:** `Peer reviewed`
 - **Publication Year:** `2024`
 - **Ersilia Contributor:** [sucksido](https://github.com/sucksido)
