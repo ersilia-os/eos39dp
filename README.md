@@ -1,6 +1,6 @@
 # Pharmacokinetics Profiler (PhaKinPro)
 
-Pharmacokinetics Profiler (PhaKinPro) predicts the pharmacokinetic (PK) properties of drug candidates. It has been built using a manually curated database of 10.000 compounds with information for 12 PK endpoints. Each model provides a multi-classifier output for a single endpoint, along with a confidence estimate of the prediction and whether the query molecule is within the applicability domain of the model.
+Profiles a compound across eighteen pharmacokinetic endpoints covering hepatic stability, half-life, oral bioavailability, plasma protein binding, microsomal clearance and blood-brain barrier penetration. PhaKinPro, from Rath and colleagues, was assembled to let unpromising ADME profiles be spotted before synthesis, and is distributed as a public web tool. Each endpoint was modelled separately from curated literature data, so coverage and confidence differ between them and a full profile should not be read as uniformly reliable.
 
 This model was incorporated on 2024-05-03.Last packaged on 2025-10-10.
 
@@ -23,7 +23,7 @@ This model was incorporated on 2024-05-03.Last packaged on 2025-10-10.
 ### Output
 - **Output Dimension:** `18`
 - **Output Consistency:** `Fixed`
-- **Interpretation:** A list of several ADME predictions
+- **Interpretation:** Probabilities across eighteen pharmacokinetic endpoints spanning stability, exposure and distribution.
 
 Below are the **Output Columns** of the model:
 | Name | Type | Direction | Description |
