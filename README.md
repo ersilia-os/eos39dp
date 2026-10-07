@@ -1,6 +1,6 @@
 # Pharmacokinetics Profiler (PhaKinPro)
 
-Profiles a compound across eighteen pharmacokinetic endpoints covering hepatic stability, half-life, oral bioavailability, plasma protein binding, microsomal clearance and blood-brain barrier penetration. PhaKinPro, from Rath and colleagues, was assembled to let unpromising ADME profiles be spotted before synthesis, and is distributed as a public web tool. Each endpoint was modelled separately from curated literature data, so coverage and confidence differ between them and a full profile should not be read as uniformly reliable.
+Profiles a compound across ten pharmacokinetic endpoints covering hepatic stability and half-life, renal and microsomal clearance, plasma half-life and protein binding, oral bioavailability, Caco-2 permeability, blood-brain barrier penetration and central nervous system activity. Several are predicted at more than one cut-off, hence eighteen values. PhaKinPro, from Rath and colleagues, was built from over 10,000 curated molecules spanning twelve endpoints, one binary QSAR classifier each, so reliability varies and a full profile should not be read as uniformly dependable.
 
 This model was incorporated on 2024-05-03.Last packaged on 2025-10-10.
 
@@ -23,7 +23,7 @@ This model was incorporated on 2024-05-03.Last packaged on 2025-10-10.
 ### Output
 - **Output Dimension:** `18`
 - **Output Consistency:** `Fixed`
-- **Interpretation:** Probabilities across eighteen pharmacokinetic endpoints spanning stability, exposure and distribution.
+- **Interpretation:** Probabilities from eighteen binary classifiers spanning ten pharmacokinetic endpoints, several evaluated at more than one cut-off.
 
 Below are the **Output Columns** of the model:
 | Name | Type | Direction | Description |
