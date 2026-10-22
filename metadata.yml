@@ -2,13 +2,14 @@ Identifier: eos39dp
 Slug: phakinpro
 Status: Ready
 Title: Pharmacokinetics Profiler (PhaKinPro)
-Description: Profiles a compound across ten pharmacokinetic endpoints covering hepatic
-  stability and half-life, renal and microsomal clearance, plasma half-life and protein
-  binding, oral bioavailability, Caco-2 permeability, blood-brain barrier penetration
-  and central nervous system activity. Several are predicted at more than one cut-off,
-  hence eighteen values. PhaKinPro, from Rath and colleagues, was built from over
-  10,000 curated molecules spanning twelve endpoints, one binary QSAR classifier each,
-  so reliability varies and a full profile should not be read as uniformly dependable.
+Description: Profiles a compound across ten pharmacokinetic endpoints covering 
+  hepatic stability and half-life, renal and microsomal clearance, plasma 
+  half-life and protein binding, oral bioavailability, Caco-2 permeability, 
+  blood-brain barrier penetration and central nervous system activity. Several 
+  are predicted at more than one cut-off, hence eighteen values. PhaKinPro, from
+  Rath and colleagues, was built from over 10,000 curated molecules spanning 
+  twelve endpoints, one binary QSAR classifier each, so reliability varies and a
+  full profile should not be read as uniformly dependable.
 Deployment:
   - Local
 Source: Local
@@ -22,8 +23,8 @@ Output:
   - Score
 Output Dimension: 18
 Output Consistency: Fixed
-Interpretation: Probabilities from eighteen binary classifiers spanning ten pharmacokinetic
-  endpoints, several evaluated at more than one cut-off.
+Interpretation: Probabilities from eighteen binary classifiers spanning ten 
+  pharmacokinetic endpoints, several evaluated at more than one cut-off.
 Tag:
   - ADME
 Biomedical Area:
@@ -38,7 +39,7 @@ License: MIT
 Contributor: sucksido
 Incorporation Date: '2024-05-03'
 Last Packaging Date: '2025-10-10'
-Release: v1.0.0
+Release: v1.0.1
 S3: https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip
 DockerHub: https://hub.docker.com/r/ersiliaos/eos39dp
 Docker Architecture:
