@@ -2,7 +2,8 @@
 
 Profiles a compound across ten pharmacokinetic endpoints covering hepatic stability and half-life, renal and microsomal clearance, plasma half-life and protein binding, oral bioavailability, Caco-2 permeability, blood-brain barrier penetration and central nervous system activity. Several are predicted at more than one cut-off, hence eighteen values. PhaKinPro, from Rath and colleagues, was built from over 10,000 curated molecules spanning twelve endpoints, one binary QSAR classifier each, so reliability varies and a full profile should not be read as uniformly dependable.
 
-This model was incorporated on 2024-05-03.Last packaged on 2025-10-10.
+This model was incorporated on 2024-05-03.
+Last packaged on 2025-10-10.
 
 ## Information
 ### Identifiers
@@ -46,6 +47,7 @@ _10 of 18 columns are shown_
 - **DockerHub**: [https://hub.docker.com/r/ersiliaos/eos39dp](https://hub.docker.com/r/ersiliaos/eos39dp)
 - **Docker Architecture:** `AMD64`, `ARM64`
 - **S3 Storage**: [https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip](https://ersilia-models-zipped.s3.eu-central-1.amazonaws.com/eos39dp.zip)
+- **Apptainer**: [https://models-sif.s3.eu-north-1.amazonaws.com/eos39dp_v1.sif](https://models-sif.s3.eu-north-1.amazonaws.com/eos39dp_v1.sif)
 
 ### Resource Consumption
 - **Model Size (Mb):** `50`
